@@ -37,4 +37,7 @@ fn main() {
         .generate()
         // ... and error out if we can't generate the bindings.
         .expect("Unable to generate tracepoint bindings");
+
+    // // 3. Tell rustc to link against lttng-ust
+    // println!("cargo:rustc-link-lib=dylib=lttng-ust");
 }

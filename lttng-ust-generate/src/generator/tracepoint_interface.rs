@@ -1,8 +1,8 @@
 use bindgen::Builder;
-use std::fs::File;
 use std::io;
 use std::io::prelude::*;
 use std::path::PathBuf;
+use std::{fs::File, path::Path};
 
 use super::ctf_field_c_type;
 use crate::{EventClass, EventInstance, Field, Provider};
@@ -10,24 +10,18 @@ use crate::{EventClass, EventInstance, Field, Provider};
 pub(super) fn generate_interface_impl(
     path: &PathBuf,
     providers: &[Provider],
-    interface_header: &PathBuf,
-    tracepoint_header: &PathBuf,
+    interface_header: &Path,
+    tracepoint_header: &Path,
 ) -> io::Result<()> {
-    let mut outf = File::create(path).expect(&format!(
-        "Failed to create tracepoint interface implementation {:?}\n",
-        path
-    ));
+    let mut outf = File::create(path).unwrap_or_else(|_| {
+        panic!(
+            "Failed to create tracepoint interface implementation {:?}\n",
+            path
+        )
+    });
 
-    write!(
-        outf,
-        "#include \"{}\"\n",
-        interface_header.to_string_lossy()
-    )?;
-    write!(
-        outf,
-        "#include \"{}\"\n",
-        tracepoint_header.to_string_lossy()
-    )?;
+    writeln!(outf, "#include \"{}\"", interface_header.to_string_lossy())?;
+    //writeln!(outf, "#include \"{}\"", tracepoint_header.to_string_lossy())?;
 
     for provider in providers {
         generate_provider_impl(provider, &mut outf)?;
@@ -37,15 +31,13 @@ pub(super) fn generate_interface_impl(
 }
 
 pub(super) fn generate_interface_header(path: &PathBuf, providers: &[Provider]) -> io::Result<()> {
-    let mut outf = File::create(path).expect(&format!(
-        "Failed to create tracepoint interface header {:?}\n",
-        path
-    ));
+    let mut outf = File::create(path)
+        .unwrap_or_else(|_| panic!("Failed to create tracepoint interface header {:?}\n", path));
 
-    write!(outf, "#if !defined(_RUST_TRACEPOINT_INTERFACE)\n")?;
-    write!(outf, "#define _RUST_TRACEPOINT_INTERFACE\n")?;
-    write!(outf, "#include <stdint.h>\n")?;
-    write!(outf, "#include <stddef.h>\n")?;
+    writeln!(outf, "#if !defined(_RUST_TRACEPOINT_INTERFACE)")?;
+    writeln!(outf, "#define _RUST_TRACEPOINT_INTERFACE")?;
+    writeln!(outf, "#include <stdint.h>")?;
+    writeln!(outf, "#include <stddef.h>")?;
 
     for provider in providers {
         generate_provider_header(provider, &mut outf)?;
@@ -77,14 +69,19 @@ fn generate_provider_impl<F: Write>(provider: &Provider, outf: &mut F) -> io::Re
                 generate_func_name(provider, event_class, instance)
             )?;
             generate_c_args(&event_class.fields, outf, true)?;
-            write!(outf, ") {{\n")?;
+            writeln!(outf, ") {{")?;
             write!(
                 outf,
-                "    tracepoint({}, {}, ",
+                "    printf(\"en=%ld\", lttng_ust_tracepoint_enabled({}, {}));",
+                provider.name, instance.name
+            )?;
+            write!(
+                outf,
+                "    lttng_ust_tracepoint({}, {}, ",
                 provider.name, instance.name
             )?;
             generate_c_args(&event_class.fields, outf, false)?;
-            write!(outf, ");\n")?;
+            writeln!(outf, ");")?;
             write!(outf, "}}\n\n")?;
         }
     }
@@ -101,7 +98,7 @@ fn generate_provider_header<F: Write>(provider: &Provider, outf: &mut F) -> io::
                 generate_func_name(provider, event_class, instance)
             )?;
             generate_c_args(&event_class.fields, outf, true)?;
-            write!(outf, ");\n")?;
+            writeln!(outf, ");")?;
         }
     }
 

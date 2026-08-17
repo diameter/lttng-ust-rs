@@ -1,0 +1,4 @@
+[target.x86_64-unknown-linux-gnu]
+# Prevents LLVM lld from stripping the LTTng sections
+rustflags = ["-C", "link-arg=-Wl,--no-gc-sections"]
+#rustflags = ["-C", "link-arg=-Wl,-T,./lttng.ld"]

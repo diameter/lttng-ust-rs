@@ -20,13 +20,14 @@ pub(super) fn generate_rust_bindings(
 }
 
 fn write_include<F: Write>(outf: &mut F, raw_bindings_path: &PathBuf) -> io::Result<()> {
-    write!(outf, "#[allow(non_upper_case_globals)]\n")?;
-    write!(outf, "#[allow(non_camel_case_types)]\n")?;
-    write!(outf, "#[allow(non_snake_case)]\n")?;
-    write!(outf, "mod detail {{\n")?;
+    writeln!(outf, "#[allow(non_upper_case_globals)]")?;
+    writeln!(outf, "#[allow(non_camel_case_types)]")?;
+    writeln!(outf, "#[allow(non_snake_case)]")?;
+    writeln!(outf, "mod detail {{")?;
     let bindings = std::fs::read_to_string(raw_bindings_path)?;
-    write!(outf, "{}", bindings.replace("extern \"C\"", "extern \"C\""))?;
-    write!(outf, "}}\n")?;
+    //write!(outf, "{}", bindings.replace("extern \"C\"", "extern \"C\""))?;
+    write!(outf, "{}", bindings)?;
+    writeln!(outf, "}}")?;
 
     Ok(())
 }
@@ -37,7 +38,7 @@ fn write_providers<F: Write>(outf: &mut F, providers: &[Provider]) -> io::Result
         for event_class in &provider.classes {
             for instance in &event_class.instances {
                 let f = generate_instance_call(provider, event_class, instance);
-                write!(outf, "{}\n", f)?;
+                writeln!(outf, "{}", f)?;
             }
         }
         write!(outf, "}}\n\n")?;

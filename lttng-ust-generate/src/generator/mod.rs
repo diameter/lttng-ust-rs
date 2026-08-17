@@ -1,8 +1,7 @@
 use super::{CTFType, Provider};
 use bindgen::Builder;
-use cc;
 use std::env;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 mod rust_bindings;
 mod tracepoint_impl;
@@ -71,15 +70,19 @@ impl Generator {
         let bindings_file = generate_path.join("tracepoints.rs");
         builder
             .generate()
-            .expect(&format!(
-                "Failed to generate tracepoint bindings for {}",
-                self.lib_name
-            ))
+            .unwrap_or_else(|_| {
+                panic!(
+                    "Failed to generate tracepoint bindings for {}",
+                    self.lib_name
+                )
+            })
             .write_to_file(&bindings_file)
-            .expect(&format!(
-                "Failed to write raw tracepoint bindings for {}",
-                self.lib_name
-            ));
+            .unwrap_or_else(|_| {
+                panic!(
+                    "Failed to write raw tracepoint bindings for {}",
+                    self.lib_name
+                )
+            });
 
         // Generate pretty rust module
         generate_rust_bindings(&self.output_file_name, &self.providers, &bindings_file)
@@ -99,8 +102,8 @@ impl Generator {
         fs::create_dir_all(generate_path).expect("Failed to create source directory");
 
         // Generate and build C-language files
-        let tp_hdr_pth = &self.tracepoint_header(&generate_path);
-        let in_hdr_pth = &self.interface_header(&generate_path);
+        let tp_hdr_pth = &self.tracepoint_header(generate_path);
+        let in_hdr_pth = &self.interface_header(generate_path);
         generate_tp_header(tp_hdr_pth, &self.providers)
             .expect("Failed to generate tracepoint header");
         generate_interface_header(in_hdr_pth, &self.providers)
@@ -121,15 +124,15 @@ impl Generator {
             .compile(&self.lib_name);
     }
 
-    fn tracepoint_header(&self, generate_path: &PathBuf) -> PathBuf {
+    fn tracepoint_header(&self, generate_path: &Path) -> PathBuf {
         self.local_path(generate_path, "_tps.h")
     }
 
-    fn interface_header(&self, generate_path: &PathBuf) -> PathBuf {
+    fn interface_header(&self, generate_path: &Path) -> PathBuf {
         self.local_path(generate_path, "_int.h")
     }
 
-    fn local_path(&self, generate_path: &PathBuf, suffix: &str) -> PathBuf {
+    fn local_path(&self, generate_path: &Path, suffix: &str) -> PathBuf {
         generate_path.join(format!("{}{}", self.lib_name, suffix))
     }
 }

@@ -9,14 +9,21 @@ use crate::{CTFType, EventClass, Field, Provider};
 pub(super) fn generate_tp_impl(path: &PathBuf, include_path: &Path) -> io::Result<()> {
     let mut outf = File::create(path)
         .unwrap_or_else(|_| panic!("Failed to create tracepoint impl {:?}\n", path));
-    writeln!(outf, "#define TRACEPOINT_CREATE_PROBES")?;
-    writeln!(outf, "#define TRACEPOINT_DEFINE")?;
+    writeln!(outf, "#define LTTNG_UST_TRACEPOINT_CREATE_PROBES")?;
+    writeln!(outf, "#define LTTNG_UST_TRACEPOINT_DEFINE")?;
     writeln!(outf, "#include \"{}\"", include_path.to_string_lossy())
 }
 
 pub(super) fn generate_tp_header(path: &PathBuf, providers: &[Provider]) -> io::Result<()> {
     let mut outf = File::create(path)
         .unwrap_or_else(|_| panic!("Failed to create tracepoint header {:?}\n", path));
+
+    writeln!(outf, "#undef LTTNG_UST_TRACEPOINT_PROVIDER")?;
+    write!(
+        outf,
+        "#define LTTNG_UST_TRACEPOINT_PROVIDER {}\n\n",
+        providers[0].name
+    )?;
 
     writeln!(outf, "#undef LTTNG_UST_TRACEPOINT_INCLUDE")?;
     write!(
@@ -50,26 +57,27 @@ fn generate_provider<F: Write>(provider: &Provider, outf: &mut F) -> io::Result<
     writeln!(outf, "#include <stddef.h>")?;
 
     for event_class in &provider.classes {
-        writeln!(outf, "TRACEPOINT_EVENT_CLASS(")?;
-        writeln!(outf, "    {},", provider.name)?;
-        generate_event_class(event_class, outf)?;
+        // writeln!(outf, "TRACEPOINT_EVENT_CLASS(")?;
+        // writeln!(outf, "    {},", provider.name)?;
+        // generate_event_class(event_class, outf)?;
 
-        writeln!(outf, "/**--== {} instances ==--**/", event_class.class_name)?;
+        //writeln!(outf, "/**--== {} instances ==--**/", event_class.class_name)?;
         for instance in &event_class.instances {
-            writeln!(outf, "TRACEPOINT_EVENT_INSTANCE(")?;
+            writeln!(outf, "LTTNG_UST_TRACEPOINT_EVENT(")?;
             writeln!(outf, "    {},", provider.name)?;
-            writeln!(outf, "    {},", event_class.class_name)?;
+            //writeln!(outf, "    {},", event_class.class_name)?;
             writeln!(outf, "    {},", instance.name)?;
-            generate_tp_args(&event_class.fields, outf)?;
-            write!(outf, "\n)\n")?;
+            //generate_tp_args(&event_class.fields, outf)?;
+            generate_event_class(event_class, outf)?;
+            //write!(outf, "\n)\n")?;
             // TODO: emit TRACEPOINT_LOGLEVEL
-            write!(
-                outf,
-                "TRACEPOINT_LOGLEVEL({}, {}, {})\n\n",
-                provider.name,
-                instance.name,
-                instance.level.lttng_level()
-            )?;
+            // write!(
+            //     outf,
+            //     "TRACEPOINT_LOGLEVEL({}, {}, {})\n\n",
+            //     provider.name,
+            //     instance.name,
+            //     instance.level.lttng_level()
+            // )?;
         }
     }
 
@@ -77,9 +85,9 @@ fn generate_provider<F: Write>(provider: &Provider, outf: &mut F) -> io::Result<
 }
 
 fn generate_event_class<F: Write>(event_class: &EventClass, outf: &mut F) -> io::Result<()> {
-    writeln!(outf, "    {},", event_class.class_name)?;
+    //writeln!(outf, "    {},", event_class.class_name)?;
     generate_tp_args(&event_class.fields, outf)?;
-    write!(outf, ",\n    TP_FIELDS(\n")?;
+    write!(outf, ",\n    LTTNG_UST_TP_FIELDS(\n")?;
     let mut first = true;
     for field in &event_class.fields {
         if first {
@@ -97,7 +105,7 @@ fn generate_event_class<F: Write>(event_class: &EventClass, outf: &mut F) -> io:
 }
 
 fn generate_tp_args<F: Write>(fields: &[Field], outf: &mut F) -> io::Result<()> {
-    writeln!(outf, "    TP_ARGS(")?;
+    writeln!(outf, "    LTTNG_UST_TP_ARGS(")?;
     let mut first = true;
     for field in fields {
         if first {
@@ -123,7 +131,7 @@ fn generate_ctf_call<F: Write>(field: &Field, outf: &mut F) -> io::Result<()> {
     match field.ctf_type {
         CTFType::Integer(i) => write!(
             outf,
-            "ctf_integer({0}, {1}, {1}_arg)",
+            "lttng_ust_field_integer({0}, {1}, {1}_arg)",
             i.c_type(),
             field.name
         ),
@@ -193,7 +201,7 @@ fn generate_ctf_call<F: Write>(field: &Field, outf: &mut F) -> io::Result<()> {
         ),
         CTFType::SequenceText => write!(
             outf,
-            "ctf_sequence_text(char, {0}, {0}_arg, size_t, {0}_len)",
+            "lttng_ust_field_sequence_text(char, {0}, {0}_arg, size_t, {0}_len)",
             field.name
         ),
         CTFType::SequenceTextNoWrite => write!(
