@@ -3,7 +3,7 @@ use std::io;
 use std::io::prelude::*;
 use std::path::PathBuf;
 
-use {CTFType, EventClass, EventInstance, Field, Provider};
+use crate::{CTFType, EventClass, EventInstance, Field, Provider};
 
 use super::tracepoint_interface::generate_func_name;
 
@@ -25,11 +25,7 @@ fn write_include<F: Write>(outf: &mut F, raw_bindings_path: &PathBuf) -> io::Res
     write!(outf, "#[allow(non_snake_case)]\n")?;
     write!(outf, "mod detail {{\n")?;
     let bindings = std::fs::read_to_string(raw_bindings_path)?;
-    write!(
-        outf,
-        "{}",
-        bindings.replace("extern \"C\"", "unsafe extern \"C\"")
-    )?;
+    write!(outf, "{}", bindings.replace("extern \"C\"", "extern \"C\""))?;
     write!(outf, "}}\n")?;
 
     Ok(())

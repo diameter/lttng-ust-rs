@@ -1,6 +1,7 @@
 [workspace]
-resolver = "2"
+resolver = "3"
 members = [
     "lttng-ust",
     "lttng-ust-generate",
+    "examples/my_first_tracepoint"
 ]

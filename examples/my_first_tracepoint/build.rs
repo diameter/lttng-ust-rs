@@ -1,10 +1,10 @@
-#![feature(nll)]
+//#![feature(nll)]
 
 extern crate lttng_ust_generate as lttng_ust;
 
+use lttng_ust::{CIntegerType, CTFType};
 use std::env;
 use std::path::PathBuf;
-use lttng_ust::{CTFType, CIntegerType};
 
 fn main() {
     // Create a provider name "hello_world"

@@ -7,7 +7,8 @@ categories = [ "external-ffi-bindings", "development-tools::ffi", "development-t
 readme = "README.md"
 license = "MIT"
 repository = "https://github.com/bobtwinkles/lttng-ust-rs/"
+edition = "2024"
 
 [dependencies]
-bindgen = "0.65"
-cc = "1.0"
+bindgen = "0.72"
+cc = "1"

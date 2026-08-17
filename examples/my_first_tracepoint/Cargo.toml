@@ -2,6 +2,7 @@
 name = "my_first_tracepoint"
 version = "0.1.0"
 authors = ["bobtwinkles <srkoser+GitHub@gmail.com>"]
+edition = "2024"
 
 [dependencies]
 lttng-ust = { path = "../../lttng-ust" }

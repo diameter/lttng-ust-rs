@@ -5,7 +5,7 @@ use std::io::prelude::*;
 use std::path::PathBuf;
 
 use super::ctf_field_c_type;
-use {EventClass, EventInstance, Field, Provider};
+use crate::{EventClass, EventInstance, Field, Provider};
 
 pub(super) fn generate_interface_impl(
     path: &PathBuf,

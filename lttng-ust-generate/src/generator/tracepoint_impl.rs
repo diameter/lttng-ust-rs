@@ -4,7 +4,7 @@ use std::io::prelude::*;
 use std::path::PathBuf;
 
 use super::ctf_field_c_type;
-use {CTFType, EventClass, Field, Provider};
+use crate::{CTFType, EventClass, Field, Provider};
 
 pub(super) fn generate_tp_impl(path: &PathBuf, include_path: &PathBuf) -> io::Result<()> {
     let mut outf =
