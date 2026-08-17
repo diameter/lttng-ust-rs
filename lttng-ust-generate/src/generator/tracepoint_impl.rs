@@ -1,65 +1,65 @@
-use std::fs::File;
 use std::io;
 use std::io::prelude::*;
 use std::path::PathBuf;
+use std::{fs::File, path::Path};
 
 use super::ctf_field_c_type;
 use crate::{CTFType, EventClass, Field, Provider};
 
-pub(super) fn generate_tp_impl(path: &PathBuf, include_path: &PathBuf) -> io::Result<()> {
-    let mut outf =
-        File::create(path).expect(&format!("Failed to create tracepoint impl {:?}\n", path));
-    write!(outf, "#define TRACEPOINT_CREATE_PROBES\n")?;
-    write!(outf, "#define TRACEPOINT_DEFINE\n")?;
-    write!(outf, "#include \"{}\"\n", include_path.to_string_lossy())
+pub(super) fn generate_tp_impl(path: &PathBuf, include_path: &Path) -> io::Result<()> {
+    let mut outf = File::create(path)
+        .unwrap_or_else(|_| panic!("Failed to create tracepoint impl {:?}\n", path));
+    writeln!(outf, "#define TRACEPOINT_CREATE_PROBES")?;
+    writeln!(outf, "#define TRACEPOINT_DEFINE")?;
+    writeln!(outf, "#include \"{}\"", include_path.to_string_lossy())
 }
 
 pub(super) fn generate_tp_header(path: &PathBuf, providers: &[Provider]) -> io::Result<()> {
-    let mut outf =
-        File::create(path).expect(&format!("Failed to create tracepoint header {:?}\n", path));
+    let mut outf = File::create(path)
+        .unwrap_or_else(|_| panic!("Failed to create tracepoint header {:?}\n", path));
 
-    write!(outf, "#undef TRACEPOINT_INCLUDE\n")?;
+    writeln!(outf, "#undef LTTNG_UST_TRACEPOINT_INCLUDE")?;
     write!(
         outf,
-        "#define TRACEPOINT_INCLUDE \"{}\"\n\n",
+        "#define LTTNG_UST_TRACEPOINT_INCLUDE \"{}\"\n\n",
         path.to_string_lossy()
     )?;
 
     write!(outf, "#if !defined(_RUST_TRACEPOINT_GUARD)")?;
-    write!(outf, " || defined(TRACEPOINT_HEADER_MULTI_READ)\n")?;
+    writeln!(outf, " || defined(LTTNG_UST_TRACEPOINT_HEADER_MULTI_READ)")?;
 
     write!(outf, "#define _RUST_TRACEPOINT_GUARD\n\n")?;
     for provider in providers {
         generate_provider(provider, &mut outf)?;
     }
-    write!(outf, "#endif\n")?;
-    write!(outf, "#include <lttng/tracepoint-event.h>\n")?;
+    writeln!(outf, "#endif")?;
+    writeln!(outf, "#include <lttng/tracepoint-event.h>")?;
 
     Ok(())
 }
 
 fn generate_provider<F: Write>(provider: &Provider, outf: &mut F) -> io::Result<()> {
-    write!(outf, "#undef TRACEPOINT_PROVIDER\n")?;
-    write!(outf, "#define TRACEPOINT_PROVIDER {}\n\n", provider.name)?;
+    writeln!(outf, "#undef LTTNG_UST_TRACEPOINT_PROVIDER")?;
+    write!(
+        outf,
+        "#define LTTNG_UST_TRACEPOINT_PROVIDER {}\n\n",
+        provider.name
+    )?;
     write!(outf, "#include <lttng/tracepoint.h>\n\n")?;
-    write!(outf, "#include <stdint.h>\n")?;
-    write!(outf, "#include <stddef.h>\n")?;
+    writeln!(outf, "#include <stdint.h>")?;
+    writeln!(outf, "#include <stddef.h>")?;
 
     for event_class in &provider.classes {
-        write!(outf, "TRACEPOINT_EVENT_CLASS(\n")?;
-        write!(outf, "    {},\n", provider.name)?;
+        writeln!(outf, "TRACEPOINT_EVENT_CLASS(")?;
+        writeln!(outf, "    {},", provider.name)?;
         generate_event_class(event_class, outf)?;
 
-        write!(
-            outf,
-            "/**--== {} instances ==--**/\n",
-            event_class.class_name
-        )?;
+        writeln!(outf, "/**--== {} instances ==--**/", event_class.class_name)?;
         for instance in &event_class.instances {
-            write!(outf, "TRACEPOINT_EVENT_INSTANCE(\n")?;
-            write!(outf, "    {},\n", provider.name)?;
-            write!(outf, "    {},\n", event_class.class_name)?;
-            write!(outf, "    {},\n", instance.name)?;
+            writeln!(outf, "TRACEPOINT_EVENT_INSTANCE(")?;
+            writeln!(outf, "    {},", provider.name)?;
+            writeln!(outf, "    {},", event_class.class_name)?;
+            writeln!(outf, "    {},", instance.name)?;
             generate_tp_args(&event_class.fields, outf)?;
             write!(outf, "\n)\n")?;
             // TODO: emit TRACEPOINT_LOGLEVEL
@@ -77,7 +77,7 @@ fn generate_provider<F: Write>(provider: &Provider, outf: &mut F) -> io::Result<
 }
 
 fn generate_event_class<F: Write>(event_class: &EventClass, outf: &mut F) -> io::Result<()> {
-    write!(outf, "    {},\n", event_class.class_name)?;
+    writeln!(outf, "    {},", event_class.class_name)?;
     generate_tp_args(&event_class.fields, outf)?;
     write!(outf, ",\n    TP_FIELDS(\n")?;
     let mut first = true;
@@ -85,7 +85,7 @@ fn generate_event_class<F: Write>(event_class: &EventClass, outf: &mut F) -> io:
         if first {
             first = false;
         } else {
-            write!(outf, "\n")?;
+            writeln!(outf)?;
         }
         write!(outf, "        ")?;
         generate_ctf_call(field, outf)?;
@@ -97,13 +97,13 @@ fn generate_event_class<F: Write>(event_class: &EventClass, outf: &mut F) -> io:
 }
 
 fn generate_tp_args<F: Write>(fields: &[Field], outf: &mut F) -> io::Result<()> {
-    write!(outf, "    TP_ARGS(\n")?;
+    writeln!(outf, "    TP_ARGS(")?;
     let mut first = true;
     for field in fields {
         if first {
             first = false;
         } else {
-            write!(outf, ",\n")?;
+            writeln!(outf, ",")?;
         }
         write!(
             outf,
