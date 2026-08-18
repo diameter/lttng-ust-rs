@@ -23,6 +23,7 @@ fn write_include<F: Write>(outf: &mut F, raw_bindings_path: &PathBuf) -> io::Res
     writeln!(outf, "#[allow(non_upper_case_globals)]")?;
     writeln!(outf, "#[allow(non_camel_case_types)]")?;
     writeln!(outf, "#[allow(non_snake_case)]")?;
+    writeln!(outf, "#[allow(unused)]")?;
     writeln!(outf, "mod detail {{")?;
     let bindings = std::fs::read_to_string(raw_bindings_path)?;
     //write!(outf, "{}", bindings.replace("extern \"C\"", "extern \"C\""))?;
@@ -34,7 +35,11 @@ fn write_include<F: Write>(outf: &mut F, raw_bindings_path: &PathBuf) -> io::Res
 
 fn write_providers<F: Write>(outf: &mut F, providers: &[Provider]) -> io::Result<()> {
     for provider in providers {
-        write!(outf, "pub(in super) mod {} {{", provider.name)?;
+        write!(
+            outf,
+            "#[allow(unused)]\npub(in super) mod {} {{",
+            provider.name
+        )?;
         for event_class in &provider.classes {
             for instance in &event_class.instances {
                 let f = generate_instance_call(provider, event_class, instance);

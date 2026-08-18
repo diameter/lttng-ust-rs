@@ -71,13 +71,13 @@ fn generate_provider<F: Write>(provider: &Provider, outf: &mut F) -> io::Result<
             generate_event_class(event_class, outf)?;
             //write!(outf, "\n)\n")?;
             // TODO: emit TRACEPOINT_LOGLEVEL
-            // write!(
-            //     outf,
-            //     "TRACEPOINT_LOGLEVEL({}, {}, {})\n\n",
-            //     provider.name,
-            //     instance.name,
-            //     instance.level.lttng_level()
-            // )?;
+            writeln!(
+                outf,
+                "TRACEPOINT_LOGLEVEL({}, {}, {})\n\n",
+                provider.name,
+                instance.name,
+                instance.level.lttng_level()
+            )?;
         }
     }
 
@@ -137,65 +137,74 @@ fn generate_ctf_call<F: Write>(field: &Field, outf: &mut F) -> io::Result<()> {
         ),
         CTFType::IntegerNoWrite(i) => write!(
             outf,
-            "ctf_integer_nowrite({0}, {1}, {1}_arg)",
+            "lttng_ust_field_integer_nowrite({0}, {1}, {1}_arg)",
             i.c_type(),
             field.name
         ),
         CTFType::IntegerHex(i) => write!(
             outf,
-            "ctf_integer_hex({0}, {1}, {1}_arg)",
+            "lttng_ust_field_integer_hex({0}, {1}, {1}_arg)",
             i.c_type(),
             field.name
         ),
         CTFType::IntegerNetwork(i) => write!(
             outf,
-            "ctf_network({0}, {1}, {1}_arg)",
+            "lttng_ust_field_integer_network({0}, {1}, {1}_arg)",
             i.c_type(),
             field.name
         ),
         CTFType::IntegerNetworkHex(i) => write!(
             outf,
-            "ctf_network_hex({0}, {1}, {1}_arg)",
+            "lttng_ust_field_integer_network_hew({0}, {1}, {1}_arg)",
             i.c_type(),
             field.name
         ),
-        CTFType::Float(f) => write!(outf, "ctf_float({0}, {1}, {1}_arg)", f.c_type(), field.name),
-        CTFType::FloatNoWrite(f) => write!(
+        CTFType::Float(f) => write!(
             outf,
-            "ctf_float_nowrite({0}, {1}, {1}_arg)",
+            "lttng_ust_field_float({0}, {1}, {1}_arg)",
             f.c_type(),
             field.name
         ),
-        CTFType::String => write!(outf, "ctf_string({0}, {0}_arg)", field.name),
-        CTFType::StringNoWrite => write!(outf, "ctf_string_nowrite({0}, {0}_arg)", field.name),
+        CTFType::FloatNoWrite(f) => write!(
+            outf,
+            "lttng_ust_field_float_nowrite({0}, {1}, {1}_arg)",
+            f.c_type(),
+            field.name
+        ),
+        CTFType::String => write!(outf, "lttng_ust_field_string({0}, {0}_arg)", field.name),
+        CTFType::StringNoWrite => write!(
+            outf,
+            "lttng_ust_field_string_nowrite({0}, {0}_arg)",
+            field.name
+        ),
         CTFType::Array(i, l) => write!(
             outf,
-            "ctf_array({0}, {1}, {1}_arg, {2})",
+            "lttng_ust_field_array({0}, {1}, {1}_arg, {2})",
             i.c_type(),
             field.name,
             l
         ),
         CTFType::ArrayText(l) => write!(
             outf,
-            "ctf_array_text(text, {0}, {0}_arg, {1})",
+            "lttng_ust_field_array_text(text, {0}, {0}_arg, {1})",
             field.name, l
         ),
         CTFType::ArrayNoWrite(i, l) => write!(
             outf,
-            "ctf_array_nowrite({0}, {1}, {1}_arg, {2})",
+            "lttng_ust_field_array_nowrite({0}, {1}, {1}_arg, {2})",
             i.c_type(),
             field.name,
             l
         ),
         CTFType::Sequence(i) => write!(
             outf,
-            "ctf_sequence({0}, {1}, {1}_arg, size_t, {1}_len)",
+            "lttng_ust_field_sequence({0}, {1}, {1}_arg, size_t, {1}_len)",
             i.c_type(),
             field.name
         ),
         CTFType::SequenceNoWrite(i) => write!(
             outf,
-            "ctf_sequence({0}, {1}, {1}_arg, size_t, {1}_len)",
+            "lttng_ust_field_sequence_nowrite({0}, {1}, {1}_arg, size_t, {1}_len)",
             i.c_type(),
             field.name
         ),
@@ -206,7 +215,7 @@ fn generate_ctf_call<F: Write>(field: &Field, outf: &mut F) -> io::Result<()> {
         ),
         CTFType::SequenceTextNoWrite => write!(
             outf,
-            "ctf_sequence_text_nowrite(char, {0}, {0}_arg, size_t, {0}_len)",
+            "lttng_ust_field_sequence_text_nowrite(char, {0}, {0}_arg, size_t, {0}_len)",
             field.name
         ),
         CTFType::Enum | CTFType::EnumNoWrite => unimplemented!(),

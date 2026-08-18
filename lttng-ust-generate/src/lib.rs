@@ -402,12 +402,12 @@ pub enum CTFType {
 
 impl CTFType {
     fn is_sequence(&self) -> bool {
-        match *self {
+        matches!(
+            *self,
             CTFType::Sequence(_)
-            | CTFType::SequenceNoWrite(_)
-            | CTFType::SequenceText
-            | CTFType::SequenceTextNoWrite => true,
-            _ => false,
-        }
+                | CTFType::SequenceNoWrite(_)
+                | CTFType::SequenceText
+                | CTFType::SequenceTextNoWrite
+        )
     }
 }

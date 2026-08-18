@@ -1,5 +1,3 @@
-//#![feature(nll)]
-
 extern crate lttng_ust_generate as lttng_ust;
 
 use lttng_ust::{CIntegerType, CTFType};
@@ -37,7 +35,4 @@ fn main() {
         .generate()
         // ... and error out if we can't generate the bindings.
         .expect("Unable to generate tracepoint bindings");
-
-    // // 3. Tell rustc to link against lttng-ust
-    // println!("cargo:rustc-link-lib=dylib=lttng-ust");
 }
