@@ -70,11 +70,11 @@ fn generate_provider_impl<F: Write>(provider: &Provider, outf: &mut F) -> io::Re
             )?;
             generate_c_args(&event_class.fields, outf, true)?;
             writeln!(outf, ") {{")?;
-            write!(
-                outf,
-                "    printf(\"en=%ld\", lttng_ust_tracepoint_enabled({}, {}));",
-                provider.name, instance.name
-            )?;
+            // write!(
+            //     outf,
+            //     "    printf(\"en=%ld\", lttng_ust_tracepoint_enabled({}, {}));",
+            //     provider.name, instance.name
+            // )?;
             write!(
                 outf,
                 "    lttng_ust_tracepoint({}, {}, ",
