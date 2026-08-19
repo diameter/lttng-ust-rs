@@ -37,7 +37,9 @@ fn write_providers<F: Write>(outf: &mut F, providers: &[Provider]) -> io::Result
     for provider in providers {
         write!(
             outf,
-            "#[allow(unused)]\npub(in super) mod {} {{",
+            "#[allow(unused)]\n\
+            #[allow(clippy::missing_transmute_annotations)]\n\
+            pub(in super) mod {} {{",
             provider.name
         )?;
         for event_class in &provider.classes {
